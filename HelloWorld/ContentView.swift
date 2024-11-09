@@ -8,7 +8,8 @@ struct ContentView: View {
     @State private var scale: Float = 1.0
     @State private var isStereoscopic = false
     @State private var sharedSession: ARSession = .init()
-
+    @StateObject private var speechManager = SpeechRecognitionManager()
+    
     var body: some View {
         ZStack {
             if isStereoscopic {
@@ -16,14 +17,16 @@ struct ContentView: View {
                     HStack(spacing: 0) {
                         ARSceneViewContainer(
                             isImageVisible: $isImageVisible,
+                            speechManager: speechManager,
                             scale: scale,
                             eye: .left,
                             sharedSession: sharedSession
                         )
                         .frame(width: geometry.size.width / 2)
-
+                        
                         ARSceneViewContainer(
                             isImageVisible: $isImageVisible,
+                            speechManager: speechManager,
                             scale: scale,
                             eye: .right,
                             sharedSession: sharedSession
@@ -35,26 +38,25 @@ struct ContentView: View {
             } else {
                 ARSceneViewContainer(
                     isImageVisible: $isImageVisible,
+                    speechManager: speechManager,
                     scale: scale,
                     eye: .center,
                     sharedSession: nil
                 )
                 .edgesIgnoringSafeArea(.all)
             }
-
+            
             VStack {
                 Spacer()
                 HStack {
-                    Button(action: {
-                        isImageVisible.toggle()
-                    }) {
+                    Button(action: { isImageVisible.toggle() }) {
                         Text(isImageVisible ? "Hide Image" : "Show Image")
                             .padding()
                             .background(Color.blue)
                             .foregroundColor(.white)
                             .cornerRadius(10)
                     }
-
+                    
                     Button(action: {
                         if isImageVisible {
                             scale += 0.2
@@ -66,7 +68,7 @@ struct ContentView: View {
                             .foregroundColor(.white)
                             .cornerRadius(10)
                     }
-
+                    
                     Button(action: {
                         if isImageVisible, scale > 0.3 {
                             scale -= 0.2
@@ -78,10 +80,8 @@ struct ContentView: View {
                             .foregroundColor(.white)
                             .cornerRadius(10)
                     }
-
-                    Button(action: {
-                        isStereoscopic.toggle()
-                    }) {
+                    
+                    Button(action: { isStereoscopic.toggle() }) {
                         Text(isStereoscopic ? "Mono" : "Stereo")
                             .padding()
                             .background(Color.purple)
