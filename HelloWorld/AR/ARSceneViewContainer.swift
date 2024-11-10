@@ -31,32 +31,26 @@ struct ARSceneViewContainer: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: ARSCNView, context: Context) {
-        context.coordinator.createGIFNode(
-            from: URL(string: "https://media.tenor.com/6f1m34j5MMUAAAAM/getting-online-getting.gif")!,
-            width: 0.5,
-            height: 0.5,
-            position: SCNVector3(x: 0, y: 0.4, z: -1)
-        )
-//        guard speechManager.state == .finished,
-//              let currResponse = speechManager.currentResponse
-//        else {
-//            handleOtherStates(context)
-//            return
-//        }
-//
-//        // Clean up existing content
-//        context.coordinator.removeAllImageNodes()
-//        context.coordinator.removeAllGIFNodes()
-//        context.coordinator.removeVideoNode()
-//
-//        switch currResponse.contentType {
-//        case .slides:
-//            handleSlidesResponse(currResponse, context)
-//        case .chemistry:
-//            handleChemistryResponse(currResponse, context)
-//        case .math:
-//            handleMathResponse(currResponse, context)
-//        }
+        guard speechManager.state == .finished,
+              let currResponse = speechManager.currentResponse
+        else {
+            handleOtherStates(context)
+            return
+        }
+        
+        // Clean up existing content
+        context.coordinator.removeAllImageNodes()
+        context.coordinator.removeAllGIFNodes()
+        context.coordinator.removeVideoNode()
+        
+        switch currResponse.contentType {
+        case .slides:
+            handleSlidesResponse(currResponse, context)
+        case .chemistry:
+            handleChemistryResponse(currResponse, context)
+        case .math:
+            handleMathResponse(currResponse, context)
+        }
     }
     
     private func handleSlidesResponse(_ response: FinalAIResponse, _ context: Context) {
