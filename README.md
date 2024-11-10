@@ -23,29 +23,11 @@ Athena is a groundbreaking generative augmented reality app for iOS that democra
 
 1. Clone the repository
 ```bash
-git clone https://github.com/minor/athena.git
+git clone https://github.com/tharunkumartk/athena-ios
 ```
 
-2. Install dependencies
-```bash
-cd athena
-pod install
-```
+Build the project in XCode, and modify the BaseURL in the NetworkManager.swift file. 
 
-3. Open the workspace
-```bash
-open Athena.xcworkspace
-```
-
-4. Update the `Config.swift` file with your API credentials
-```swift
-struct Config {
-    static let apiURL = "YOUR_BACKEND_URL"
-    static let apiKey = "YOUR_API_KEY"
-}
-```
-
-## 🔧 Configuration
 
 ### Backend Setup
 
