@@ -1,10 +1,3 @@
-//
-//  ARTextPanel.swift
-//  HelloWorld
-//
-//  Created by Tharun Kumar on 11/9/24.
-//
-
 import ARKit
 import Foundation
 import SceneKit
@@ -12,42 +5,72 @@ import SwiftUI
 import UIKit
 
 enum ARTextPanel {
-    static func create(text: String, position: SCNVector3, scale: Float) -> SCNNode {
+    static let baseWidth = 50.0
+    static let baseHeight = 20.0
+    
+    static func create(text: String, position: SCNVector3) -> SCNNode {
+        // Create container node for both panel and text
         let containerNode = SCNNode()
-        
-        // Text setup
-        let textGeometry = SCNText(string: text, extrusionDepth: 0)
-        textGeometry.font = UIFont.systemFont(ofSize: 1, weight: .regular)
-        textGeometry.flatness = 0.005
-        textGeometry.alignmentMode = CATextLayerAlignmentMode.center.rawValue
-        textGeometry.materials = [createTextMaterial()]
-        
-        // Text positioning
-        let textNode = SCNNode(geometry: textGeometry)
-        let (min, max) = textGeometry.boundingBox
-        textNode.position = SCNVector3(
-            -(max.x - min.x)/2,
-            -(max.y - min.y)/2,
-            0
-        )
-        
-        // Panel setup
-        let panelNode = createBackgroundPanel(width: max.x - min.x + 0.4,
-                                              height: max.y - min.y + 0.2)
-        panelNode.position = SCNVector3(0, 1, -0.001)
-        
-        // Assembly
-        containerNode.addChildNode(panelNode)
-        containerNode.addChildNode(textNode)
         containerNode.position = position
-        containerNode.scale = SCNVector3(scale, scale, scale)
+        containerNode.scale = SCNVector3(0.02, 0.02, 0.02)
         
-        // Billboard constraint
-        containerNode.constraints = [SCNBillboardConstraint()]
+        // Create text
+        let textGeometry = SCNText(string: text, extrusionDepth: 0)
+        textGeometry.font = UIFont.systemFont(ofSize: 4)
+        textGeometry.firstMaterial?.diffuse.contents = UIColor.white
+        textGeometry.containerFrame = CGRect(x: 0, y: 0, width: baseWidth, height: baseHeight)
+        textGeometry.isWrapped = true
+        
+        let textNode = SCNNode(geometry: textGeometry)
+        
+        // Create background panel slightly larger than text
+        let panel = createBackgroundPanel(width: 1.1, height: 1.1)
+        panel.position = SCNVector3(x: Float(baseWidth)/2, y: Float(baseHeight)/2, z: -0.1)
+        
+        // Add billboard constraint to container
+        let billboardConstraint = SCNBillboardConstraint()
+        billboardConstraint.freeAxes = .Y
+        containerNode.constraints = [billboardConstraint]
+        
+        // Add panel and text to container
+        containerNode.addChildNode(panel)
+        containerNode.addChildNode(textNode)
+        
+        // Start with zero opacity
+        containerNode.opacity = 0.0
+        
+        // Create and apply fade-in animation
+        let fadeInAnimation = CABasicAnimation(keyPath: "opacity")
+        fadeInAnimation.fromValue = 0.0
+        fadeInAnimation.toValue = 1.0
+        fadeInAnimation.duration = 0.2
+        fadeInAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        
+        containerNode.addAnimation(fadeInAnimation, forKey: "fadeIn")
+        containerNode.opacity = 1.0
         
         return containerNode
     }
     
+    static func remove(_ node: SCNNode, completion: (() -> Void)? = nil) {
+        // Create fade out animation
+        let fadeOutAnimation = CABasicAnimation(keyPath: "opacity")
+        fadeOutAnimation.fromValue = 1.0
+        fadeOutAnimation.toValue = 0.0
+        fadeOutAnimation.duration = 0.2
+        fadeOutAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        
+        // Set up completion handler using AnimationDelegate
+        fadeOutAnimation.delegate = AnimationDelegate {
+            node.removeFromParentNode()
+            completion?()
+        }
+        
+        // Apply the fade out animation
+        node.addAnimation(fadeOutAnimation, forKey: "fadeOut")
+        node.opacity = 0.0
+    }
+
     private static func createTextMaterial() -> SCNMaterial {
         let material = SCNMaterial()
         material.diffuse.contents = UIColor.white
@@ -56,48 +79,37 @@ enum ARTextPanel {
         material.lightingModel = .constant
         return material
     }
-    
+
     private static func createBackgroundPanel(width: Float, height: Float) -> SCNNode {
-        let panel = SCNPlane(width: CGFloat(width), height: CGFloat(height))
+        let cornerRadius = 5.0
+        let panel = SCNPlane(width: CGFloat(width) * baseWidth, height: CGFloat(height) * baseHeight)
+        panel.cornerRadius = cornerRadius
+        
         let material = SCNMaterial()
-        material.diffuse.contents = createGlassmorphicBackground()
+        
+        material.diffuse.contents = UIColor(white: 0.5, alpha: 0.4)
         material.isDoubleSided = true
-        material.lightingModel = .constant
+        material.lightingModel = .physicallyBased
+        material.roughness.contents = 0.2
+        material.metalness.contents = 0.8
+        
+        let borderMaterial = SCNMaterial()
+        borderMaterial.diffuse.contents = UIColor(white: 0.6, alpha: 0.4)
+        
+        let borderPanel = SCNPlane(width: CGFloat(width) * baseWidth + 1, height: CGFloat(height) * baseHeight + 1)
+        borderPanel.cornerRadius = cornerRadius
+        
+        let borderNode = SCNNode(geometry: borderPanel)
+        borderNode.geometry?.materials = [borderMaterial]
+        borderNode.position = SCNVector3(0, 0, -0.01)
+        
         panel.materials = [material]
-        return SCNNode(geometry: panel)
-    }
-    
-    private static func createGlassmorphicBackground() -> UIImage {
-        let size = CGSize(width: 800, height: 400)
-        UIGraphicsBeginImageContextWithOptions(size, false, 0)
-        let context = UIGraphicsGetCurrentContext()!
+        let mainNode = SCNNode(geometry: panel)
         
-        // Create rounded rect path
-        let path = UIBezierPath(roundedRect: CGRect(origin: .zero, size: size),
-                                cornerRadius: 40)
-        context.addPath(path.cgPath)
+        let containerNode = SCNNode()
+        containerNode.addChildNode(borderNode)
+        containerNode.addChildNode(mainNode)
         
-        // Add gradient
-        let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                                  colors: [
-                                      UIColor(white: 0, alpha: 0.7).cgColor,
-                                      UIColor(white: 0, alpha: 0.5).cgColor
-                                  ] as CFArray,
-                                  locations: [0.0, 1.0])!
-        
-        context.clip()
-        context.drawLinearGradient(gradient,
-                                   start: .zero,
-                                   end: CGPoint(x: size.width, y: size.height),
-                                   options: [])
-        
-        // Add glow
-        context.setStrokeColor(UIColor(white: 1, alpha: 0.2).cgColor)
-        context.setLineWidth(2)
-        path.stroke()
-        
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return image!
+        return containerNode
     }
 }

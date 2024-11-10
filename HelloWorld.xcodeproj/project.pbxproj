@@ -17,6 +17,8 @@
 		4AAFA7632CE0696F00059C59 /* ARTextPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA7622CE0696F00059C59 /* ARTextPanel.swift */; };
 		4AAFA7662CE0699000059C59 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA7652CE0699000059C59 /* Extensions.swift */; };
 		4AAFA7682CE069A300059C59 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA7672CE069A300059C59 /* Types.swift */; };
+		4AAFA76B2CE06A0300059C59 /* NetworkingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA76A2CE06A0300059C59 /* NetworkingManager.swift */; };
+		4AAFA76D2CE0736000059C59 /* AnimationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA76C2CE0736000059C59 /* AnimationDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +34,9 @@
 		4AAFA7622CE0696F00059C59 /* ARTextPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARTextPanel.swift; sourceTree = "<group>"; };
 		4AAFA7652CE0699000059C59 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		4AAFA7672CE069A300059C59 /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
+		4AAFA76A2CE06A0300059C59 /* NetworkingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkingManager.swift; sourceTree = "<group>"; };
+		4AAFA76C2CE0736000059C59 /* AnimationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationDelegate.swift; sourceTree = "<group>"; };
+		4AAFA76E2CE09B7C00059C59 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,13 +70,14 @@
 		4AAFA7422CDFF45600059C59 /* HelloWorld */ = {
 			isa = PBXGroup;
 			children = (
+				4AAFA76E2CE09B7C00059C59 /* Info.plist */,
+				4AAFA7692CE069F500059C59 /* Commands */,
 				4AAFA7642CE0698900059C59 /* Utils */,
 				4AAFA75D2CE0691200059C59 /* AR */,
 				4AAFA7432CDFF45600059C59 /* AppDelegate.swift */,
 				4AAFA7452CDFF45600059C59 /* ContentView.swift */,
 				4AAFA7472CDFF45700059C59 /* Assets.xcassets */,
 				4AAFA7492CDFF45700059C59 /* Preview Content */,
-				4AAFA75B2CE0188900059C59 /* SpeechRecognitionManager.swift */,
 			);
 			path = HelloWorld;
 			sourceTree = "<group>";
@@ -107,8 +113,18 @@
 			children = (
 				4AAFA7652CE0699000059C59 /* Extensions.swift */,
 				4AAFA7672CE069A300059C59 /* Types.swift */,
+				4AAFA76C2CE0736000059C59 /* AnimationDelegate.swift */,
 			);
 			path = Utils;
+			sourceTree = "<group>";
+		};
+		4AAFA7692CE069F500059C59 /* Commands */ = {
+			isa = PBXGroup;
+			children = (
+				4AAFA75B2CE0188900059C59 /* SpeechRecognitionManager.swift */,
+				4AAFA76A2CE06A0300059C59 /* NetworkingManager.swift */,
+			);
+			path = Commands;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -184,9 +200,11 @@
 				4AAFA7462CDFF45600059C59 /* ContentView.swift in Sources */,
 				4AAFA7632CE0696F00059C59 /* ARTextPanel.swift in Sources */,
 				4AAFA75C2CE0188900059C59 /* SpeechRecognitionManager.swift in Sources */,
+				4AAFA76D2CE0736000059C59 /* AnimationDelegate.swift in Sources */,
 				4AAFA7662CE0699000059C59 /* Extensions.swift in Sources */,
 				4AAFA75F2CE0692300059C59 /* ARSceneViewContainer.swift in Sources */,
 				4AAFA7682CE069A300059C59 /* Types.swift in Sources */,
+				4AAFA76B2CE06A0300059C59 /* NetworkingManager.swift in Sources */,
 				4AAFA7612CE0695700059C59 /* ARSceneCoordinator.swift in Sources */,
 				4AAFA7442CDFF45600059C59 /* AppDelegate.swift in Sources */,
 			);
@@ -325,6 +343,7 @@
 				DEVELOPMENT_TEAM = NC9PRSDQA7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HelloWorld/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "For speech to text capabilities";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "For speech to text capabilities";
@@ -358,6 +377,7 @@
 				DEVELOPMENT_TEAM = NC9PRSDQA7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HelloWorld/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "For speech to text capabilities";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "For speech to text capabilities";

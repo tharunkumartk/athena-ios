@@ -1,33 +1,30 @@
 import ARKit
+import AVFoundation
 import SceneKit
 import SwiftUI
 import UIKit
 
 struct ContentView: View {
-    @State private var isImageVisible = false
-    @State private var scale: Float = 1.0
     @State private var isStereoscopic = false
     @State private var sharedSession: ARSession = .init()
     @StateObject private var speechManager = SpeechRecognitionManager()
-    
+
+    @StateObject var audioPlayerViewModel = AudioPlayerViewModel()
+
     var body: some View {
         ZStack {
             if isStereoscopic {
                 GeometryReader { geometry in
-                    HStack(spacing: 0) {
+                    HStack {
                         ARSceneViewContainer(
-                            isImageVisible: $isImageVisible,
                             speechManager: speechManager,
-                            scale: scale,
                             eye: .left,
                             sharedSession: sharedSession
                         )
                         .frame(width: geometry.size.width / 2)
-                        
+
                         ARSceneViewContainer(
-                            isImageVisible: $isImageVisible,
                             speechManager: speechManager,
-                            scale: scale,
                             eye: .right,
                             sharedSession: sharedSession
                         )
@@ -37,50 +34,16 @@ struct ContentView: View {
                 .edgesIgnoringSafeArea(.all)
             } else {
                 ARSceneViewContainer(
-                    isImageVisible: $isImageVisible,
                     speechManager: speechManager,
-                    scale: scale,
                     eye: .center,
                     sharedSession: nil
                 )
                 .edgesIgnoringSafeArea(.all)
             }
-            
+
             VStack {
                 Spacer()
                 HStack {
-                    Button(action: { isImageVisible.toggle() }) {
-                        Text(isImageVisible ? "Hide Image" : "Show Image")
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    
-                    Button(action: {
-                        if isImageVisible {
-                            scale += 0.2
-                        }
-                    }) {
-                        Text("Bigger")
-                            .padding()
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    
-                    Button(action: {
-                        if isImageVisible, scale > 0.3 {
-                            scale -= 0.2
-                        }
-                    }) {
-                        Text("Smaller")
-                            .padding()
-                            .background(Color.red)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    
                     Button(action: { isStereoscopic.toggle() }) {
                         Text(isStereoscopic ? "Mono" : "Stereo")
                             .padding()
@@ -94,11 +57,44 @@ struct ContentView: View {
             .onAppear {
                 let configuration = ARWorldTrackingConfiguration()
                 sharedSession.run(configuration)
+                speechManager.urlHandler = { audioUrl in
+                    await audioPlayerViewModel.loadAudio(from: audioUrl)
+                    audioPlayerViewModel.play()
+                }
             }
         }
     }
 }
 
-#Preview {
-    ContentView()
+class AudioPlayerViewModel: ObservableObject {
+    private var audioPlayer: AVAudioPlayer?
+
+    func loadAudio(from urlString: String) async {
+        guard let url = URL(string: urlString) else { return }
+
+        do {
+            // Configure audio session for playback
+            let audioSession = AVAudioSession.sharedInstance()
+            try await audioSession.setCategory(.playback, mode: .default)
+            try await audioSession.setActive(true)
+
+            let data = try await URLSession.shared.data(from: url).0
+            try await MainActor.run {
+                self.audioPlayer = try AVAudioPlayer(data: data)
+                self.audioPlayer?.prepareToPlay()
+            }
+        } catch {
+            print("Failed to load audio data: \(error)")
+        }
+    }
+
+    func play() {
+        guard let player = audioPlayer else {
+            print("No audio player available")
+            return
+        }
+
+        let success = player.play()
+        print("Playing audio: \(success)")
+    }
 }
