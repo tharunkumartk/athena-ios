@@ -14,6 +14,9 @@ class ARSceneCoordinator: NSObject, ARSCNViewDelegate {
     var eye: Eye = .center
     let ipd: Float = 0.063
     
+    var videoNode: SCNNode?
+    var videoPlayer: AVPlayer?
+    
     func updateSpeechVisualization(currentText: String) {
         DispatchQueue.main.async {
             // If there's an existing text node, fade it out first
@@ -249,5 +252,116 @@ class ARSceneCoordinator: NSObject, ARSCNViewDelegate {
             let eyeTransform = simd_mul(cameraTransform, eyeOffset)
             pointOfView.simdTransform = eyeTransform
         }
+    }
+}
+
+extension ARSceneCoordinator {
+    func createVideoNode(from videoUrlString: String, width: Float, height: Float, position: SCNVector3) {
+        // Remove existing video if any
+        removeVideoNode()
+        
+        guard let videoUrl = URL(string: videoUrlString) else {
+            print("Invalid video URL")
+            return
+        }
+        
+        // Create video player
+        let player = AVPlayer(url: videoUrl)
+        player.actionAtItemEnd = .none // Don't stop at end
+        
+        // Add observer for video end to enable looping
+        NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { [weak self] _ in
+            self?.videoPlayer?.seek(to: .zero)
+            self?.videoPlayer?.play()
+        }
+        
+        // Create video node
+        let node = SCNNode()
+        
+        // Create plane geometry for video
+        let plane = SCNPlane(width: CGFloat(width), height: CGFloat(height))
+        plane.cornerRadius = 0.01
+        
+        // Create material with video
+        let material = SCNMaterial()
+        material.diffuse.contents = player
+        material.isDoubleSided = true
+        plane.materials = [material]
+        
+        node.geometry = plane
+        node.position = position
+        
+        // Store references
+        videoNode = node
+        videoPlayer = player
+        
+        // Add node to scene
+        DispatchQueue.main.async {
+            // Start with fully transparent node
+            node.opacity = 0.0
+            
+            // Create fade in animation
+            let fadeAnimation = CABasicAnimation(keyPath: "opacity")
+            fadeAnimation.fromValue = 0.0
+            fadeAnimation.toValue = 1.0
+            fadeAnimation.duration = 0.2
+            fadeAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            
+            self.arView.scene.rootNode.addChildNode(node)
+            
+            // Apply the fade animation and start playing
+            node.addAnimation(fadeAnimation, forKey: "fadeIn")
+            node.opacity = 1.0
+            player.play()
+        }
+    }
+    
+    func removeVideoNode(completion: (() -> Void)? = nil) {
+        guard let node = videoNode else {
+            completion?()
+            return
+        }
+        
+        // Create fade out animation
+        let fadeAnimation = CABasicAnimation(keyPath: "opacity")
+        fadeAnimation.fromValue = 1.0
+        fadeAnimation.toValue = 0.0
+        fadeAnimation.duration = 0.2
+        fadeAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        
+        // Set up completion handler
+        fadeAnimation.delegate = AnimationDelegate {
+            // Stop and remove video player
+            self.videoPlayer?.pause()
+            self.videoPlayer?.replaceCurrentItem(with: nil)
+            
+            // Remove node
+            node.removeFromParentNode()
+            
+            // Clear references
+            self.videoNode = nil
+            self.videoPlayer = nil
+            
+            completion?()
+        }
+        
+        // Apply the fade out animation
+        node.addAnimation(fadeAnimation, forKey: "fadeOut")
+        node.opacity = 0.0
+    }
+    
+    // Call this when cleaning up the coordinator
+    func cleanupVideo() {
+        videoPlayer?.pause()
+        videoPlayer?.replaceCurrentItem(with: nil)
+        videoNode?.removeFromParentNode()
+        videoNode = nil
+        videoPlayer = nil
+        
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
 }

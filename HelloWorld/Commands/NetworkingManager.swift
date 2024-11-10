@@ -1,13 +1,49 @@
 import Foundation
 import UIKit
 
-struct AIResponse: Codable {
-    let slides: [String] // URLs as strings
+// MARK: - Response Models
+
+enum ContentType: String, Codable {
+    case slides
+    case chemistry
+    case math
+}
+
+// Base response structure
+struct BaseResponse: Codable {
+    let type: ContentType
+}
+
+// Specific response types
+struct SlidesResponse: Codable {
+    let type: ContentType
+    let slides: [String]
     let audio_link: String
 }
 
+struct ChemistryResponse: Codable {
+    let type: ContentType
+    let gif_url: String
+    let audio_link: String
+}
+
+struct MathResponse: Codable {
+    let type: ContentType
+    let video_url: String
+    let audio_link: String
+}
+
+// MARK: - Final Response Models
+
+enum ContentMedia {
+    case slides([UIImage])
+    case gif(String) // For animated GIFs, you might want to use a specialized GIF handling library
+    case video(String)
+}
+
 struct FinalAIResponse {
-    let slides: [UIImage]
+    let contentType: ContentType
+    let media: ContentMedia
     let audioURL: String
 }
 
@@ -15,7 +51,7 @@ struct FinalAIResponse {
 class NetworkManager: ObservableObject {
     static let shared = NetworkManager()
     private let baseURL = "http://10.49.144.66:8000"
-
+    
     private init() {}
     
     private func log(_ message: String, isError: Bool = false) {
@@ -23,26 +59,30 @@ class NetworkManager: ObservableObject {
         print("\(prefix) \(message)")
     }
     
+    private func processURL(_ urlString: String) -> String {
+        return urlString.replacingOccurrences(of: "https://tmpfiles.org/", with: "https://tmpfiles.org/dl/")
+    }
+    
     private func downloadImage(from urlString: String) async throws -> UIImage {
-        let urlString = urlString.replacingOccurrences(of: "https://tmpfiles.org/", with: "https://tmpfiles.org/dl/")
-
-        guard let url = URL(string: urlString) else {
-            log("Invalid URL: \(urlString)", isError: true)
-            throw NSError(domain: "NetworkError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
+        let processedURL = processURL(urlString)
+        
+        guard let url = URL(string: processedURL) else {
+            log("Invalid URL: \(processedURL)", isError: true)
+            throw NetworkError.invalidURL
         }
         
         let (data, response) = try await URLSession.shared.data(from: url)
         
         guard let httpResponse = response as? HTTPURLResponse,
-              (200 ... 299).contains(httpResponse.statusCode)
+              (200...299).contains(httpResponse.statusCode)
         else {
-            log("Failed to download image from URL: \(urlString)", isError: true)
-            throw NSError(domain: "NetworkError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to download image"])
+            log("Failed to download image from URL: \(processedURL)", isError: true)
+            throw NetworkError.downloadFailed
         }
         
         guard let image = UIImage(data: data) else {
-            log("Failed to convert data to image from URL: \(urlString)", isError: true)
-            throw NSError(domain: "NetworkError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid image data"])
+            log("Failed to convert data to image from URL: \(processedURL)", isError: true)
+            throw NetworkError.invalidImageData
         }
         
         return image
@@ -51,87 +91,94 @@ class NetworkManager: ObservableObject {
     func sendPrompt(_ text: String, sceneImage: UIImage?) async throws -> FinalAIResponse {
         let endpoint = "\(baseURL)/handle-ar-content"
         log("Starting network request to endpoint: \(endpoint)")
-        log("Prompt text: \(text)")
-            
+        
         guard let image = sceneImage else {
-            log("Failed to load image from assets: good-professional-pic", isError: true)
-            throw NSError(domain: "NetworkError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Operation failed"])
+            log("No image provided", isError: true)
+            throw NetworkError.noImageProvided
         }
-        log("Successfully loaded image from assets")
-            
+        
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             log("Failed to convert image to JPEG data", isError: true)
-            throw NSError(domain: "NetworkError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Operation failed"])
+            throw NetworkError.imageConversionFailed
         }
-        log("Successfully converted image to JPEG data (size: \(ByteCountFormatter.string(fromByteCount: Int64(imageData.count), countStyle: .file)))")
-            
+        
         let boundary = UUID().uuidString
-        log("Generated boundary: \(boundary)")
-            
         var request = URLRequest(url: URL(string: endpoint)!)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-            
+        
+        // Create multipart form data
         var body = Data()
-            
         body.append("--\(boundary)\r\n")
         body.append("Content-Disposition: form-data; name=\"file\"; filename=\"image.jpg\"\r\n")
         body.append("Content-Type: image/jpeg\r\n\r\n")
         body.append(imageData)
         body.append("\r\n")
-            
         body.append("--\(boundary)\r\n")
         body.append("Content-Disposition: form-data; name=\"prompt\"\r\n\r\n")
         body.append("\(text)\r\n")
-            
         body.append("--\(boundary)--\r\n")
-            
+        
         request.httpBody = body
-        log("Created request body (total size: \(ByteCountFormatter.string(fromByteCount: Int64(body.count), countStyle: .file)))")
-            
-        log("Sending request...")
-        let requestStartTime = Date()
+        
         let (data, response) = try await URLSession.shared.data(for: request)
-        let requestDuration = Date().timeIntervalSince(requestStartTime)
-        log("Request completed in \(String(format: "%.2f", requestDuration))s")
-            
+        
         guard let httpResponse = response as? HTTPURLResponse,
-              (200 ... 299).contains(httpResponse.statusCode)
+              (200...299).contains(httpResponse.statusCode)
         else {
             log("Server returned error", isError: true)
-            throw NSError(domain: "NetworkError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Operation failed"])
+            throw NetworkError.serverError
         }
         
-        // Print the JSON string before decoding
-        if let jsonString = String(data: data, encoding: .utf8) {
-            log("Received JSON response: \(jsonString)")
-        } else {
-            log("Failed to convert response data to string", isError: true)
-        }
-            
+        // First decode the base response to get the type
         let decoder = JSONDecoder()
-        let aiResponse = try decoder.decode(AIResponse.self, from: data)
-        log("Successfully decoded response with \(aiResponse.slides.count) slide URLs")
-            
-        var images: [UIImage] = []
-        for (index, urlString) in aiResponse.slides.enumerated() {
-            do {
+        let baseResponse = try decoder.decode(BaseResponse.self, from: data)
+        
+        // Process based on content type
+        switch baseResponse.type {
+        case .slides:
+            let slidesResponse = try decoder.decode(SlidesResponse.self, from: data)
+            var images: [UIImage] = []
+            for urlString in slidesResponse.slides {
                 let image = try await downloadImage(from: urlString)
                 images.append(image)
-                log("Successfully downloaded image \(index + 1)/\(aiResponse.slides.count)")
-            } catch {
-                log("Failed to download image at index \(index): \(error.localizedDescription)", isError: true)
-                throw error
             }
+            return FinalAIResponse(
+                contentType: .slides,
+                media: .slides(images),
+                audioURL: processURL(slidesResponse.audio_link)
+            )
+            
+        case .chemistry:
+            let chemistryResponse = try decoder.decode(ChemistryResponse.self, from: data)
+            
+            return FinalAIResponse(
+                contentType: .chemistry,
+                media: .gif(chemistryResponse.gif_url),
+                audioURL: processURL(chemistryResponse.audio_link)
+            )
+            
+        case .math:
+            let mathResponse = try decoder.decode(MathResponse.self, from: data)
+            
+            return FinalAIResponse(
+                contentType: .math,
+                media: .video(processURL(mathResponse.video_url)),
+                audioURL: processURL(mathResponse.audio_link)
+            )
         }
-            
-        log("Successfully downloaded all \(images.count) images")
-            
-        let newAudioUrl = aiResponse.audio_link.replacingOccurrences(of: "https://tmpfiles.org/", with: "https://tmpfiles.org/dl/")
-
-        let ret = FinalAIResponse(slides: images, audioURL: newAudioUrl)
-        return ret
     }
+}
+
+// MARK: - Error Handling
+
+enum NetworkError: Error {
+    case invalidURL
+    case downloadFailed
+    case invalidImageData
+    case noImageProvided
+    case imageConversionFailed
+    case serverError
 }
 
 extension Data {
