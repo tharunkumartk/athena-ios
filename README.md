@@ -49,20 +49,8 @@ struct Config {
 
 ### Backend Setup
 
-The app requires a connection to our backend service. Set the following environment variables in your Xcode project:
+The app requires a connection to our backend service. The repo is available [here](https://github.com/minor/athena)
 
-```
-ATHENA_API_URL=https://api.athena.yourdomain.com
-ATHENA_API_VERSION=v1
-```
-
-### API Keys
-
-To use Athena's features, you'll need to:
-1. Register at our [Developer Portal](https://developer.athena.app)
-2. Create a new project
-3. Generate API credentials
-4. Add them to your Config.swift file
 
 ## 📱 Running the App
 
@@ -70,50 +58,15 @@ To use Athena's features, you'll need to:
 2. Press `Cmd + R` to build and run
 3. Allow camera and motion sensor permissions when prompted
 
-## 🔨 Development
-
-### Project Structure
-
-```
-Athena/
-├── Source/
-│   ├── App/
-│   ├── Features/
-│   ├── Services/
-│   └── Utils/
-├── Resources/
-│   ├── Assets.xcassets/
-│   └── Configurations/
-└── Tests/
-```
 
 ### Coding Style
 
 We follow the [Swift Style Guide](https://google.github.io/swift/) for consistent code formatting.
 
-## 🤝 Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Support
-
-- Website: [athena.app](https://athena.app)
-- Email: support@athena.app
-- Twitter: [@AthenaAR](https://twitter.com/AthenaAR)
 
 ## 🙏 Acknowledgments
 
 - ARKit Team at Apple
 - [Core ML](https://developer.apple.com/machine-learning/)
-- Our amazing community of developers and users
 
----
-Made with ❤️ by the Athena Team
