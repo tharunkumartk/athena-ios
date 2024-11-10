@@ -100,7 +100,7 @@ struct ARSceneViewContainer: UIViewRepresentable {
                 from: URL(string: gifUrl)!,
                 width: 0.5,
                 height: 0.5,
-                position: SCNVector3(x: 0, y: 0, z: -1)
+                position: SCNVector3(x: 0, y: 0.4, z: -1)
             )
         }
     }

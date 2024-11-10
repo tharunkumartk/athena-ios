@@ -46,8 +46,8 @@ struct ContentView: View {
                 HStack {
                     Button(action: { isStereoscopic.toggle() }) {
                         Text(isStereoscopic ? "Mono" : "Stereo")
-                            .padding()
-                            .background(Color.purple)
+                            .padding(3)
+                            .background(Color.black)
                             .foregroundColor(.white)
                             .cornerRadius(10)
                     }
