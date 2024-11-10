@@ -4,6 +4,18 @@ import SceneKit
 import SwiftUI
 import UIKit
 
+private struct GIFAnimationState {
+    let material: SCNMaterial
+    let frames: [UIImage]
+    let frameDurations: [TimeInterval]
+    var currentFrame: Int
+    var frameTime: TimeInterval
+}
+
+private enum AssociatedKeys {
+    static var animationState = "gifAnimationState"
+}
+
 class ARSceneCoordinator: NSObject, ARSCNViewDelegate {
     var arView: ARSCNView!
     var imageNodes: [SCNNode] = [] // Changed to array
@@ -131,13 +143,13 @@ class ARSceneCoordinator: NSObject, ARSCNViewDelegate {
         let plane = SCNPlane(width: CGFloat(width), height: CGFloat(height))
         let node = SCNNode(geometry: plane)
         node.position = position
-           
+        
         plane.cornerRadius = 0.01
-           
+        
         let material = SCNMaterial()
         material.isDoubleSided = true
         plane.materials = [material]
-           
+        
         // Load GIF data asynchronously
         URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
             guard let self = self,
@@ -147,24 +159,25 @@ class ARSceneCoordinator: NSObject, ARSCNViewDelegate {
                 print("Failed to load GIF data")
                 return
             }
-               
+            
             let frameCount = CGImageSourceGetCount(source)
             guard frameCount > 0 else { return }
-               
+            
             // Get frame durations
             var frameDurations: [TimeInterval] = []
-            var totalDuration: TimeInterval = 0
-               
+            
             for i in 0..<frameCount {
                 if let properties = CGImageSourceCopyPropertiesAtIndex(source, i, nil) as? [String: Any],
-                   let gifProperties = properties[kCGImagePropertyGIFDictionary as String] as? [String: Any],
-                   let duration = gifProperties[kCGImagePropertyGIFDelayTime as String] as? TimeInterval
+                   let gifProperties = properties[kCGImagePropertyGIFDictionary as String] as? [String: Any]
                 {
-                    frameDurations.append(duration)
-                    totalDuration += duration
+                    // Default to 0.1 seconds if no duration specified
+                    let duration = (gifProperties[kCGImagePropertyGIFDelayTime as String] as? TimeInterval) ?? 0.1
+                    frameDurations.append(max(0.01, duration)) // Ensure minimum duration
+                } else {
+                    frameDurations.append(0.1) // Default duration if properties cannot be read
                 }
             }
-               
+            
             // Create array to store frame images
             var frames: [UIImage] = []
             for i in 0..<frameCount {
@@ -172,64 +185,59 @@ class ARSceneCoordinator: NSObject, ARSCNViewDelegate {
                     frames.append(UIImage(cgImage: cgImage))
                 }
             }
-               
+            
+            // Verify we have valid frames
+            guard !frames.isEmpty, frames.count == frameDurations.count else {
+                print("Invalid GIF data: frames count mismatch")
+                return
+            }
+            
             // Set up display link for animation
             DispatchQueue.main.async {
-                var frameIndex = 0
-                var frameTime: TimeInterval = 0
-                   
                 let displayLink = CADisplayLink(target: self, selector: #selector(self.updateGIFFrame))
                 displayLink.add(to: .main, forMode: .common)
-                   
+                
                 // Store animation state in the display link
                 let animationState = GIFAnimationState(
                     material: material,
                     frames: frames,
                     frameDurations: frameDurations,
-                    currentFrame: frameIndex,
-                    frameTime: frameTime
+                    currentFrame: 0,
+                    frameTime: 0
                 )
                 objc_setAssociatedObject(displayLink, &AssociatedKeys.animationState, animationState, .OBJC_ASSOCIATION_RETAIN)
-                   
+                
                 // Add node to scene and track it
                 self.arView.scene.rootNode.addChildNode(node)
                 self.gifNodes.append((node: node, displayLink: displayLink))
-                   
+                
                 // Start with first frame
                 material.diffuse.contents = frames[0]
             }
         }.resume()
     }
-        
-    // Helper struct to store animation state
-    private struct GIFAnimationState {
-        let material: SCNMaterial
-        let frames: [UIImage]
-        let frameDurations: [TimeInterval]
-        var currentFrame: Int
-        var frameTime: TimeInterval
-    }
-        
-    // Keys for associated objects
-    private enum AssociatedKeys {
-        static var animationState = "gifAnimationState"
-    }
-        
+
     @objc private func updateGIFFrame(displayLink: CADisplayLink) {
         guard let animationState = objc_getAssociatedObject(displayLink, &AssociatedKeys.animationState) as? GIFAnimationState else {
             return
         }
-            
+        
         var state = animationState
         state.frameTime += displayLink.duration
-            
+        
         // Check if it's time to advance to next frame
         if state.frameTime >= state.frameDurations[state.currentFrame] {
             state.frameTime = 0
-            state.currentFrame = (state.currentFrame + 1) % state.frames.count
-            state.material.diffuse.contents = state.frames[state.currentFrame]
-        }
             
+            // Safely increment frame index
+            state.currentFrame = (state.currentFrame + 1) % state.frames.count
+            
+            // Safely update the material contents
+            if state.currentFrame < state.frames.count {
+                state.material.diffuse.contents = state.frames[state.currentFrame]
+            }
+        }
+        
         // Update the stored state
         objc_setAssociatedObject(displayLink, &AssociatedKeys.animationState, state, .OBJC_ASSOCIATION_RETAIN)
     }
