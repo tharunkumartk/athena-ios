@@ -11,8 +11,12 @@
 		4AAFA7462CDFF45600059C59 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA7452CDFF45600059C59 /* ContentView.swift */; };
 		4AAFA7482CDFF45700059C59 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4AAFA7472CDFF45700059C59 /* Assets.xcassets */; };
 		4AAFA74B2CDFF45700059C59 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4AAFA74A2CDFF45700059C59 /* Preview Assets.xcassets */; };
-		4AAFA75A2CE0043500059C59 /* ARSceneViewConstructor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA7592CE0043500059C59 /* ARSceneViewConstructor.swift */; };
 		4AAFA75C2CE0188900059C59 /* SpeechRecognitionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA75B2CE0188900059C59 /* SpeechRecognitionManager.swift */; };
+		4AAFA75F2CE0692300059C59 /* ARSceneViewContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA75E2CE0692300059C59 /* ARSceneViewContainer.swift */; };
+		4AAFA7612CE0695700059C59 /* ARSceneCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA7602CE0695700059C59 /* ARSceneCoordinator.swift */; };
+		4AAFA7632CE0696F00059C59 /* ARTextPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA7622CE0696F00059C59 /* ARTextPanel.swift */; };
+		4AAFA7662CE0699000059C59 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA7652CE0699000059C59 /* Extensions.swift */; };
+		4AAFA7682CE069A300059C59 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AAFA7672CE069A300059C59 /* Types.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,8 +26,12 @@
 		4AAFA7472CDFF45700059C59 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4AAFA74A2CDFF45700059C59 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		4AAFA7542CDFFBAE00059C59 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		4AAFA7592CE0043500059C59 /* ARSceneViewConstructor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARSceneViewConstructor.swift; sourceTree = "<group>"; };
 		4AAFA75B2CE0188900059C59 /* SpeechRecognitionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognitionManager.swift; sourceTree = "<group>"; };
+		4AAFA75E2CE0692300059C59 /* ARSceneViewContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARSceneViewContainer.swift; sourceTree = "<group>"; };
+		4AAFA7602CE0695700059C59 /* ARSceneCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARSceneCoordinator.swift; sourceTree = "<group>"; };
+		4AAFA7622CE0696F00059C59 /* ARTextPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARTextPanel.swift; sourceTree = "<group>"; };
+		4AAFA7652CE0699000059C59 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		4AAFA7672CE069A300059C59 /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,11 +65,12 @@
 		4AAFA7422CDFF45600059C59 /* HelloWorld */ = {
 			isa = PBXGroup;
 			children = (
+				4AAFA7642CE0698900059C59 /* Utils */,
+				4AAFA75D2CE0691200059C59 /* AR */,
 				4AAFA7432CDFF45600059C59 /* AppDelegate.swift */,
 				4AAFA7452CDFF45600059C59 /* ContentView.swift */,
 				4AAFA7472CDFF45700059C59 /* Assets.xcassets */,
 				4AAFA7492CDFF45700059C59 /* Preview Content */,
-				4AAFA7592CE0043500059C59 /* ARSceneViewConstructor.swift */,
 				4AAFA75B2CE0188900059C59 /* SpeechRecognitionManager.swift */,
 			);
 			path = HelloWorld;
@@ -81,6 +90,25 @@
 				4AAFA7542CDFFBAE00059C59 /* Metal.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4AAFA75D2CE0691200059C59 /* AR */ = {
+			isa = PBXGroup;
+			children = (
+				4AAFA75E2CE0692300059C59 /* ARSceneViewContainer.swift */,
+				4AAFA7602CE0695700059C59 /* ARSceneCoordinator.swift */,
+				4AAFA7622CE0696F00059C59 /* ARTextPanel.swift */,
+			);
+			path = AR;
+			sourceTree = "<group>";
+		};
+		4AAFA7642CE0698900059C59 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				4AAFA7652CE0699000059C59 /* Extensions.swift */,
+				4AAFA7672CE069A300059C59 /* Types.swift */,
+			);
+			path = Utils;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -154,8 +182,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				4AAFA7462CDFF45600059C59 /* ContentView.swift in Sources */,
+				4AAFA7632CE0696F00059C59 /* ARTextPanel.swift in Sources */,
 				4AAFA75C2CE0188900059C59 /* SpeechRecognitionManager.swift in Sources */,
-				4AAFA75A2CE0043500059C59 /* ARSceneViewConstructor.swift in Sources */,
+				4AAFA7662CE0699000059C59 /* Extensions.swift in Sources */,
+				4AAFA75F2CE0692300059C59 /* ARSceneViewContainer.swift in Sources */,
+				4AAFA7682CE069A300059C59 /* Types.swift in Sources */,
+				4AAFA7612CE0695700059C59 /* ARSceneCoordinator.swift in Sources */,
 				4AAFA7442CDFF45600059C59 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
