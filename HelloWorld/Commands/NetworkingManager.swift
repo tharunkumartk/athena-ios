@@ -154,7 +154,7 @@ class NetworkManager: ObservableObject {
             
             return FinalAIResponse(
                 contentType: .chemistry,
-                media: .gif(chemistryResponse.gif_url),
+                media: .gif(processURL(chemistryResponse.gif_url)),
                 audioURL: processURL(chemistryResponse.audio_link)
             )
             
