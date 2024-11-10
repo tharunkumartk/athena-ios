@@ -53,22 +53,7 @@ enum ARTextPanel {
     }
     
     static func remove(_ node: SCNNode, completion: (() -> Void)? = nil) {
-        // Create fade out animation
-        let fadeOutAnimation = CABasicAnimation(keyPath: "opacity")
-        fadeOutAnimation.fromValue = 1.0
-        fadeOutAnimation.toValue = 0.0
-        fadeOutAnimation.duration = 0.2
-        fadeOutAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-        
-        // Set up completion handler using AnimationDelegate
-        fadeOutAnimation.delegate = AnimationDelegate {
-            node.removeFromParentNode()
-            completion?()
-        }
-        
-        // Apply the fade out animation
-        node.addAnimation(fadeOutAnimation, forKey: "fadeOut")
-        node.opacity = 0.0
+        node.removeFromParentNode()
     }
 
     private static func createTextMaterial() -> SCNMaterial {

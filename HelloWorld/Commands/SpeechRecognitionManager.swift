@@ -5,6 +5,8 @@ import Speech
 import SwiftUI
 import UIKit
 
+let loadingAudioUrl = "https://secret-life-mvp.vercel.app/loading-audio.mp3"
+
 enum SpeechState {
     case listening
     case recording
@@ -29,6 +31,30 @@ class SpeechRecognitionManager: NSObject, ObservableObject, SFSpeechRecognizerDe
     private var lastProcessedText = ""
     private let wakeWord = "athena"
     private let stopPhrase = "thanks athena"
+    
+    var arView: ARSCNView?
+
+    @MainActor
+    private func captureCurrentFrame() -> UIImage? {
+        guard let arView = arView else {
+            print("⚠️ AR View not initialized")
+            return nil
+        }
+        
+        // Create renderer for better performance
+        let renderer = UIGraphicsImageRenderer(size: arView.bounds.size, format: {
+            let format = UIGraphicsImageRendererFormat.preferred()
+            format.scale = UIScreen.main.scale
+            return format
+        }())
+        
+        // Render AR view to image
+        let image = renderer.image { _ in
+            arView.drawHierarchy(in: arView.bounds, afterScreenUpdates: true)
+        }
+        
+        return image
+    }
     
     override init() {
         super.init()
@@ -70,12 +96,13 @@ class SpeechRecognitionManager: NSObject, ObservableObject, SFSpeechRecognizerDe
                 try audioSession.setActive(true)
                     
                 if let urlHandler = urlHandler {
-                    await urlHandler("https://tmpfiles.org/dl/15460248/letmethinkaboutit.mp3")
+                    await urlHandler(loadingAudioUrl)
                 } else {
                     print("Not initialized")
                 }
-                    
-                let response = try await NetworkManager.shared.sendPrompt(currentText)
+                
+                let currScreen = await captureCurrentFrame()
+                let response = try await NetworkManager.shared.sendPrompt(currentText, sceneImage: currScreen)
                     
                 await MainActor.run {
                     self.currentResponse = response
@@ -182,6 +209,7 @@ class SpeechRecognitionManager: NSObject, ObservableObject, SFSpeechRecognizerDe
                             }
                             
                         case .recording:
+                            
                             if text.contains(self.stopPhrase) {
                                 print("👋 Stop phrase detected!")
                                 self.reset() // Call reset instead of just changing state
@@ -197,7 +225,7 @@ class SpeechRecognitionManager: NSObject, ObservableObject, SFSpeechRecognizerDe
                         case .finished:
                             if text.contains(self.wakeWord) {
                                 print("🎯 Wake word detected in finished state!")
-                                self.transitionToRecording()
+//                                self.transitionToRecording()
                             }
                             
                         case .processing:
@@ -218,6 +246,29 @@ class SpeechRecognitionManager: NSObject, ObservableObject, SFSpeechRecognizerDe
         currentText = ""
         lastProcessedText = ""
         resetSilenceTimer()
+           
+        // Clean up all AR elements
+        if let arView = arView {
+            // Remove all image nodes
+            if let coordinator = arView.delegate as? ARSceneCoordinator {
+//                coordinator.removeAllImageNodes()
+//                coordinator.removeAllGIFNodes()
+                   
+                // Remove text panel if it exists
+                if let textNode = coordinator.currentTextNode {
+                    ARTextPanel.remove(textNode) {
+                        coordinator.currentTextNode = nil
+                    }
+                }
+                   
+                // Remove loading node if it exists
+                if let loadingNode = coordinator.loadingNode {
+                    loadingNode.removeFromParentNode()
+                    coordinator.loadingNode = nil
+                }
+            }
+        }
+           
         print("🎤 Transitioned to recording mode")
     }
     

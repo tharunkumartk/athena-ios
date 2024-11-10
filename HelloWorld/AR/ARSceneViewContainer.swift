@@ -32,11 +32,17 @@ struct ARSceneViewContainer: UIViewRepresentable {
 
         context.coordinator.arView = arView
         context.coordinator.eye = eye
+
+        // Add this line
+        speechManager.arView = arView
+
         return arView
     }
 
     func updateUIView(_ uiView: ARSCNView, context: Context) {
         if speechManager.state == .finished, let currResponse = speechManager.currentResponse {
+            context.coordinator.removeAllImageNodes()
+
             let imageUrlStrings = currResponse.slides
             let numberOfImages = imageUrlStrings.count
 
@@ -80,17 +86,13 @@ struct ARSceneViewContainer: UIViewRepresentable {
                 )
             }
         } else if speechManager.state == .processing {
-            context.coordinator.removeAllImageNodes()
             print("\nLOADING FROM API REQUEST !!!!! \n")
 
         } else if speechManager.state == .recording {
-            context.coordinator.removeAllImageNodes()
-
             context.coordinator.updateSpeechVisualization(
                 currentText: speechManager.currentText
             )
         } else if speechManager.state == .listening {
-            context.coordinator.removeAllImageNodes()
             context.coordinator.updateSpeechVisualization(
                 currentText: speechManager.currentText
             )
@@ -100,6 +102,4 @@ struct ARSceneViewContainer: UIViewRepresentable {
     func makeCoordinator() -> ARSceneCoordinator {
         ARSceneCoordinator()
     }
-    
-    
 }
